@@ -10,9 +10,9 @@ from flask import Flask
 BOT_TOKEN = "8944728010:AAHBZQxdBKEjfGfltkklLdBrv0bZj3MJMjk"
 ADMIN_ID = 6919434196
 
-bot = telebot.TeleBot(BOT_TOKEN)
-
+# Flask वेब सर्वर सेटअप
 app = Flask(__name__)
+
 @app.route('/')
 def home():
     return "Hisar AI Assistant is running 24/7!"
@@ -20,6 +20,9 @@ def home():
 def run_web():
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
+
+# बॉट सेटअप
+bot = telebot.TeleBot(BOT_TOKEN)
 
 conn = sqlite3.connect('users.db', check_same_thread=False)
 c = conn.cursor()
@@ -85,8 +88,11 @@ def broadcast(message):
             pass
     bot.reply_to(message, "संदेश सभी यूज़र्स को भेज दिया गया है।")
 
-threading.Thread(target=run_schedule, daemon=True).start()
-threading.Thread(target=run_web, daemon=True).start()
+# अब सब कुछ अलग-अलग थ्रेड में चलेगा ताकि कोई क्रैश न हो
+def run_bot():
+    bot.polling(non_stop=True)
 
-print("Hisar AI Assistant (24/7) चालू हो गया है...")
-bot.polling()
+if __name__ == "__main__":
+    threading.Thread(target=run_schedule, daemon=True).start()
+    threading.Thread(target=run_bot, daemon=True).start()
+    run_web()
