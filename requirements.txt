@@ -2,3 +2,5 @@ pyTelegramBotAPI
 feedparser
 schedule
 Flask
+google-generativeai
+requests
