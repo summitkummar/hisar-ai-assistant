@@ -40,22 +40,7 @@ bot = telebot.TeleBot(BOT_TOKEN)
 
 # ================= MULTI-AI FALLBACK SYSTEM =================
 def get_ai_response(prompt):
-    try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        res = model.generate_content(prompt)
-        return res.text
-    except Exception as e:
-        print(f"Gemini failed: {e}")
-
-    try:
-        headers = {"Authorization": f"Bearer {OPENROUTER_KEY}", "Content-Type": "application/json"}
-        data = {"model": "meta-llama/llama-3-8b-instruct:free", "messages": [{"role": "user", "content": prompt}]}
-        r = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data, timeout=20)
-        if r.status_code == 200:
-            return r.json()['choices'][0]['message']['content']
-    except Exception as e:
-        print(f"OpenRouter failed: {e}")
-
+    # 1. Groq (सबसे तेज और भरोसेमंद)
     try:
         headers = {"Authorization": f"Bearer {GROQ_KEY}", "Content-Type": "application/json"}
         data = {"model": "llama-3.1-8b-instant", "messages": [{"role": "user", "content": prompt}]}
@@ -65,6 +50,25 @@ def get_ai_response(prompt):
     except Exception as e:
         print(f"Groq failed: {e}")
 
+    # 2. OpenRouter
+    try:
+        headers = {"Authorization": f"Bearer {OPENROUTER_KEY}", "Content-Type": "application/json"}
+        data = {"model": "mistralai/mistral-7b-instruct:free", "messages": [{"role": "user", "content": prompt}]}
+        r = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data, timeout=20)
+        if r.status_code == 200:
+            return r.json()['choices'][0]['message']['content']
+    except Exception as e:
+        print(f"OpenRouter failed: {e}")
+
+    # 3. Gemini (Google)
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        res = model.generate_content(prompt)
+        return res.text
+    except Exception as e:
+        print(f"Gemini failed: {e}")
+
+    # 4. Sarvam AI
     try:
         headers = {"Authorization": f"Bearer {SARVAM_KEY}", "Content-Type": "application/json"}
         data = {"model": "sarvam-m", "messages": [{"role": "user", "content": prompt}]}
@@ -74,7 +78,7 @@ def get_ai_response(prompt):
     except Exception as e:
         print(f"Sarvam failed: {e}")
 
-    return "माफ़ करें, अभी सभी AI सर्वर व्यस्त हैं। थोड़ी देर बाद प्रयास करें।"
+    return "माफ़ करें, अभी AI सर्वर व्यस्त हैं। कृपया थोड़ी देर बाद प्रयास करें।"
 
 # ================= WEATHER (Hisar) =================
 def get_weather():
